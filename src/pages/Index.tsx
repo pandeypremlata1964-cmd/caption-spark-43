@@ -19,7 +19,7 @@ const Index = () => {
   const [selectedMood, setSelectedMood] = useState("playful");
   const [niche, setNiche] = useState("");
   const [topic, setTopic] = useState("");
-  const [generatedContent, setGeneratedContent] = useState<{caption: string; hashtags: string[]} | null>(null);
+  const [generatedContent, setGeneratedContent] = useState<{captions: string[]; hashtags: string[]} | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [refreshSaved, setRefreshSaved] = useState(0);
   const { toast } = useToast();
@@ -71,7 +71,7 @@ const Index = () => {
       setGeneratedContent(data);
       toast({
         title: "Generated!",
-        description: "Your caption and hashtags are ready",
+        description: "5 caption variations and hashtags are ready",
       });
     } catch (error: any) {
       console.error('Error generating content:', error);
@@ -171,7 +171,7 @@ const Index = () => {
 
             {generatedContent && (
               <GeneratedContent
-                caption={generatedContent.caption}
+                captions={generatedContent.captions}
                 hashtags={generatedContent.hashtags}
                 mood={selectedMood}
                 onSave={() => setRefreshSaved(prev => prev + 1)}

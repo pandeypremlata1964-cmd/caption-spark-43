@@ -6,24 +6,24 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface GeneratedContentProps {
-  caption: string;
+  captions: string[];
   hashtags: string[];
   mood: string;
   onSave?: () => void;
 }
 
-export const GeneratedContent = ({ caption, hashtags, mood, onSave }: GeneratedContentProps) => {
-  const [copiedCaption, setCopiedCaption] = useState(false);
+export const GeneratedContent = ({ captions, hashtags, mood, onSave }: GeneratedContentProps) => {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const copyToClipboard = async (text: string, type: 'caption' | 'hashtags') => {
+  const copyToClipboard = async (text: string, type: 'caption' | 'hashtags', index?: number) => {
     await navigator.clipboard.writeText(text);
     
-    if (type === 'caption') {
-      setCopiedCaption(true);
-      setTimeout(() => setCopiedCaption(false), 2000);
+    if (type === 'caption' && index !== undefined) {
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
     } else {
       setCopiedHashtags(true);
       setTimeout(() => setCopiedHashtags(false), 2000);
@@ -35,8 +35,8 @@ export const GeneratedContent = ({ caption, hashtags, mood, onSave }: GeneratedC
     });
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
+  const handleSave = async (caption: string, index: number) => {
+    setSavingIndex(index);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -74,30 +74,48 @@ export const GeneratedContent = ({ caption, hashtags, mood, onSave }: GeneratedC
         variant: "destructive",
       });
     } finally {
-      setIsSaving(false);
+      setSavingIndex(null);
     }
   };
 
   const hashtagsText = hashtags.map(tag => `#${tag}`).join(' ');
 
   return (
-    <Card className="p-6 space-y-4 bg-gradient-to-br from-background to-muted border-2 shadow-card animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Caption</h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => copyToClipboard(caption, 'caption')}
-            className="h-8"
-          >
-            {copiedCaption ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          </Button>
-        </div>
-        <p className="text-foreground leading-relaxed">{caption}</p>
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Caption Variations</h3>
+        {captions.map((caption, index) => (
+          <Card key={index} className="p-4 space-y-3 bg-gradient-to-br from-background to-muted border-2 shadow-card animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-primary">Option {index + 1}</span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(caption, 'caption', index)}
+                    className="h-8"
+                  >
+                    {copiedIndex === index ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    onClick={() => handleSave(caption, index)}
+                    disabled={savingIndex === index}
+                    size="sm"
+                    className="h-8 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+                  >
+                    <Save className="w-3 h-3 mr-1" />
+                    {savingIndex === index ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </div>
+              <p className="text-foreground leading-relaxed">{caption}</p>
+            </div>
+          </Card>
+        ))}
       </div>
 
-      <div className="space-y-2">
+      <Card className="p-4 space-y-2 bg-gradient-to-br from-background to-muted border-2 shadow-card">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Hashtags</h3>
           <Button
@@ -119,16 +137,7 @@ export const GeneratedContent = ({ caption, hashtags, mood, onSave }: GeneratedC
             </span>
           ))}
         </div>
-      </div>
-
-      <Button
-        onClick={handleSave}
-        disabled={isSaving}
-        className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
-      >
-        <Save className="w-4 h-4 mr-2" />
-        {isSaving ? 'Saving...' : 'Save Post'}
-      </Button>
-    </Card>
+      </Card>
+    </div>
   );
 };

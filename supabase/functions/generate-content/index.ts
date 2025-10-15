@@ -27,16 +27,17 @@ When generating:
 - Keep captions concise (1-3 sentences)
 - Include 8-12 relevant, trending hashtags
 - Make hashtags specific and effective for reach
+- Generate 5 DIFFERENT caption variations with the same hashtags
 
 Return ONLY a JSON object with this exact structure:
 {
-  "caption": "Your engaging caption here",
+  "captions": ["Caption 1 here", "Caption 2 here", "Caption 3 here", "Caption 4 here", "Caption 5 here"],
   "hashtags": ["hashtag1", "hashtag2", "hashtag3", ...]
 }`;
 
     const userPrompt = topic 
-      ? `Generate a ${mood} social media post about: ${topic} (niche: ${niche})`
-      : `Generate a ${mood} social media post for ${niche} niche`;
+      ? `Generate 5 different ${mood} social media captions about: ${topic} (niche: ${niche})`
+      : `Generate 5 different ${mood} social media captions for ${niche} niche`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
