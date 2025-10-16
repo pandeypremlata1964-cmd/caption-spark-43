@@ -1,11 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles, Briefcase, Heart, Smile } from "lucide-react";
+import { Sparkles, Briefcase, Heart, Smile, Zap, Trophy, Lightbulb, PartyPopper } from "lucide-react";
 
 const moods = [
   { value: "playful", label: "Playful", icon: Sparkles, color: "from-pink-500 to-purple-500" },
   { value: "professional", label: "Professional", icon: Briefcase, color: "from-blue-500 to-cyan-500" },
   { value: "inspirational", label: "Inspirational", icon: Heart, color: "from-orange-500 to-pink-500" },
   { value: "casual", label: "Casual", icon: Smile, color: "from-green-500 to-teal-500" },
+  { value: "energetic", label: "Energetic", icon: Zap, color: "from-yellow-500 to-orange-500" },
+  { value: "motivational", label: "Motivational", icon: Trophy, color: "from-purple-500 to-blue-500" },
+  { value: "educational", label: "Educational", icon: Lightbulb, color: "from-indigo-500 to-purple-500" },
+  { value: "celebratory", label: "Celebratory", icon: PartyPopper, color: "from-pink-500 to-red-500" },
 ];
 
 interface MoodSelectorProps {
