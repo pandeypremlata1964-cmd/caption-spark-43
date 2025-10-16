@@ -18,6 +18,7 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [selectedMood, setSelectedMood] = useState("playful");
   const [niche, setNiche] = useState("");
+  const [website, setWebsite] = useState("");
   const [topic, setTopic] = useState("");
   const [generatedContent, setGeneratedContent] = useState<{captions: string[]; hashtags: string[]} | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -55,6 +56,7 @@ const Index = () => {
           topic: topic.trim(),
           mood: selectedMood,
           niche: niche.trim(),
+          website: website.trim(),
         }
       });
 
@@ -133,6 +135,16 @@ const Index = () => {
                     placeholder="e.g., Fitness, Travel, Food, Tech..."
                     value={niche}
                     onChange={(e) => setNiche(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Website (Optional)</label>
+                  <Input
+                    placeholder="e.g., yourwebsite.com"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
                     className="h-12"
                   />
                 </div>

@@ -11,8 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, mood, niche } = await req.json();
-    console.log('Generating content for:', { topic, mood, niche });
+    const { topic, mood, niche, website } = await req.json();
+    console.log('Generating content for:', { topic, mood, niche, website });
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -24,6 +24,7 @@ serve(async (req) => {
 When generating:
 - Captions should be ${mood} in tone
 - Content should be relevant to the ${niche} niche
+${website ? `- Include or reference the website: ${website}` : ''}
 - Keep captions concise (1-3 sentences)
 - Include 8-12 relevant, trending hashtags
 - Make hashtags specific and effective for reach
