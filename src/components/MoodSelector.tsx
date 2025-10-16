@@ -19,9 +19,9 @@ interface MoodSelectorProps {
 
 export const MoodSelector = ({ selectedMood, onMoodChange }: MoodSelectorProps) => {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-foreground">Select Mood</label>
-      <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-3">
+      <label className="text-sm font-semibold text-foreground">Select Mood</label>
+      <div className="grid grid-cols-4 gap-3">
         {moods.map((mood) => {
           const Icon = mood.icon;
           const isSelected = selectedMood === mood.value;
@@ -31,14 +31,14 @@ export const MoodSelector = ({ selectedMood, onMoodChange }: MoodSelectorProps) 
               key={mood.value}
               onClick={() => onMoodChange(mood.value)}
               variant={isSelected ? "default" : "outline"}
-              className={`h-auto py-4 flex flex-col gap-2 transition-all ${
+              className={`h-auto py-4 px-3 flex flex-col gap-2 transition-all rounded-2xl ${
                 isSelected 
-                  ? `bg-gradient-to-r ${mood.color} text-white border-0 shadow-glow` 
-                  : "hover:border-primary"
+                  ? `bg-gradient-to-r ${mood.color} text-white border-0 shadow-lg scale-105` 
+                  : "hover:border-primary hover:scale-105 bg-muted/30"
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-sm font-medium">{mood.label}</span>
+              <span className="text-xs font-semibold">{mood.label}</span>
             </Button>
           );
         })}

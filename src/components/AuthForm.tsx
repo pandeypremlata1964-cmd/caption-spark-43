@@ -74,48 +74,50 @@ export const AuthForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-primary/5 to-secondary/5">
-      <Card className="w-full max-w-md p-8 space-y-6">
-        <div className="text-center space-y-2">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <Card className="w-full max-w-md p-8 md:p-10 space-y-8 bg-card shadow-card rounded-3xl border-0">
+        <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-white" />
+            <div className="w-20 h-20 bg-gradient-to-br from-primary to-accent rounded-3xl flex items-center justify-center shadow-elegant">
+              <Sparkles className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            CaptionCraft
-          </h1>
-          <p className="text-muted-foreground">
-            AI-powered captions & hashtags for creators
-          </p>
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">
+              CaptionCraft
+            </h1>
+            <p className="text-muted-foreground text-base">
+              AI-powered captions & hashtags for creators
+            </p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-3">
             <Input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-12"
+              className="h-14 rounded-2xl border-border bg-muted/30 text-base"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Input
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-12"
+              className="h-14 rounded-2xl border-border bg-muted/30 text-base"
               minLength={6}
             />
           </div>
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+            className="w-full h-14 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all rounded-2xl text-lg font-semibold shadow-elegant"
           >
             {isLoading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
           </Button>
@@ -123,10 +125,10 @@ export const AuthForm = () => {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
+            <span className="w-full border-t border-border" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
           </div>
         </div>
 
@@ -134,7 +136,7 @@ export const AuthForm = () => {
           onClick={handleGoogleSignIn}
           disabled={isLoading}
           variant="outline"
-          className="w-full h-12"
+          className="w-full h-14 rounded-2xl border-border hover:bg-muted/50"
         >
           <Chrome className="w-5 h-5 mr-2" />
           Google
@@ -144,7 +146,7 @@ export const AuthForm = () => {
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>

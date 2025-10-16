@@ -100,62 +100,71 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
-      <div className="container max-w-4xl mx-auto p-4 md:p-8 space-y-6">
-        <header className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-6xl mx-auto p-4 md:p-8">
+        <header className="mb-8 md:mb-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-elegant">
+                <Sparkles className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                  CaptionCraft
+                </h1>
+                <p className="text-sm text-muted-foreground">AI-powered caption generator</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                CaptionCraft
-              </h1>
-              <p className="text-sm text-muted-foreground">AI-powered social media content</p>
-            </div>
+            <Button onClick={handleLogout} variant="outline" size="sm" className="rounded-full">
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
-          <Button onClick={handleLogout} variant="outline" size="sm">
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
         </header>
 
-        <Tabs defaultValue="generate" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="generate">Generate</TabsTrigger>
-            <TabsTrigger value="saved">Saved Posts</TabsTrigger>
+        <Tabs defaultValue="generate" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-2 bg-card rounded-2xl p-1.5 shadow-card">
+            <TabsTrigger value="generate" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Generate
+            </TabsTrigger>
+            <TabsTrigger value="saved" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Saved Posts
+            </TabsTrigger>
           </TabsList>
 
+
           <TabsContent value="generate" className="space-y-6">
-            <Card className="p-6 space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Your Niche *</label>
+            <Card className="p-6 md:p-8 space-y-6 bg-card shadow-card rounded-3xl border-0">
+              <div className="space-y-5">
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    Your Niche <span className="text-accent">*</span>
+                  </label>
                   <Input
                     placeholder="e.g., Fitness, Travel, Food, Tech..."
                     value={niche}
                     onChange={(e) => setNiche(e.target.value)}
-                    className="h-12"
+                    className="h-14 rounded-2xl border-border bg-muted/30 text-base"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Website (Optional)</label>
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-foreground">Website (Optional)</label>
                   <Input
                     placeholder="e.g., yourwebsite.com"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
-                    className="h-12"
+                    className="h-14 rounded-2xl border-border bg-muted/30 text-base"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Topic (Optional)</label>
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-foreground">Topic (Optional)</label>
                   <Textarea
                     placeholder="What's your post about? Leave blank for general suggestions..."
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
-                    className="min-h-[100px] resize-none"
+                    className="min-h-[120px] resize-none rounded-2xl border-border bg-muted/30 text-base"
                   />
                 </div>
 
@@ -164,17 +173,17 @@ const Index = () => {
                 <Button
                   onClick={handleGenerate}
                   disabled={isGenerating || !niche.trim()}
-                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-lg font-semibold"
+                  className="w-full h-14 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all text-lg font-semibold rounded-2xl shadow-elegant"
                 >
                   {isGenerating ? (
                     <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Generating...
+                      <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                      Generating Magic...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Generate Content
+                      <Sparkles className="w-6 h-6 mr-2" />
+                      Generate Captions
                     </>
                   )}
                 </Button>
