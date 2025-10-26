@@ -220,6 +220,18 @@ const Index = () => {
                     className="h-14 w-full rounded-2xl border border-border bg-muted/30 px-4 text-base focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="bn">Bengali</option>
+                    <option value="te">Telugu</option>
+                    <option value="mr">Marathi</option>
+                    <option value="ta">Tamil</option>
+                    <option value="gu">Gujarati</option>
+                    <option value="kn">Kannada</option>
+                    <option value="ml">Malayalam</option>
+                    <option value="pa">Punjabi</option>
+                    <option value="or">Odia</option>
+                    <option value="as">Assamese</option>
+                    <option value="ur">Urdu</option>
                     <option value="es">Spanish</option>
                     <option value="fr">French</option>
                     <option value="de">German</option>
@@ -229,7 +241,6 @@ const Index = () => {
                     <option value="ko">Korean</option>
                     <option value="zh">Chinese</option>
                     <option value="ar">Arabic</option>
-                    <option value="hi">Hindi</option>
                     <option value="ru">Russian</option>
                   </select>
                 </div>
