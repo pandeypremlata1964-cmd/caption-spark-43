@@ -11,13 +11,17 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, mood, niche, website } = await req.json();
-    console.log('Generating content for:', { topic, mood, niche, website });
+    const { topic, mood, niche, website, imageData, language } = await req.json();
+    console.log('Generating content for:', { topic, mood, niche, website, hasImage: !!imageData, language });
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY not configured');
     }
+
+    const languageInstruction = language && language !== 'en' 
+      ? `- Generate all captions in ${language} language` 
+      : '- Generate captions in English';
 
     const systemPrompt = `You are a creative social media content expert. Generate engaging captions and relevant hashtags for Instagram, Twitter, and other platforms.
 
@@ -25,10 +29,12 @@ When generating:
 - Captions should be ${mood} in tone
 - Content should be relevant to the ${niche} niche
 ${website ? `- Include or reference the website: ${website}` : ''}
+${imageData ? '- Base the captions on what you see in the image/video provided' : ''}
 - Keep captions concise (1-3 sentences)
 - Include 8-12 relevant, trending hashtags
 - Make hashtags specific and effective for reach
 - Generate 5 DIFFERENT caption variations with the same hashtags
+${languageInstruction}
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -36,9 +42,32 @@ Return ONLY a JSON object with this exact structure:
   "hashtags": ["hashtag1", "hashtag2", "hashtag3", ...]
 }`;
 
-    const userPrompt = topic 
+    let userPrompt = topic 
       ? `Generate 5 different ${mood} social media captions about: ${topic} (niche: ${niche})`
       : `Generate 5 different ${mood} social media captions for ${niche} niche`;
+
+    if (imageData) {
+      userPrompt = `Analyze this image/video and ${userPrompt.toLowerCase()}`;
+    }
+
+    const messages: any[] = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    if (imageData) {
+      messages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: userPrompt },
+          { 
+            type: 'image_url', 
+            image_url: { url: imageData }
+          }
+        ]
+      });
+    } else {
+      messages.push({ role: 'user', content: userPrompt });
+    }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -48,10 +77,7 @@ Return ONLY a JSON object with this exact structure:
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
+        messages,
         temperature: 0.8,
       }),
     });

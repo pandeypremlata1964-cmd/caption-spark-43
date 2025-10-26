@@ -20,6 +20,8 @@ const Index = () => {
   const [niche, setNiche] = useState("");
   const [website, setWebsite] = useState("");
   const [topic, setTopic] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [language, setLanguage] = useState("en");
   const [generatedContent, setGeneratedContent] = useState<{captions: string[]; hashtags: string[]} | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [refreshSaved, setRefreshSaved] = useState(0);
@@ -39,6 +41,30 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime'];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image (JPG, PNG, GIF, WEBP) or video (MP4, MOV)",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please upload a file smaller than 20MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setUploadedFile(file);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!niche.trim()) {
       toast({
@@ -51,12 +77,23 @@ const Index = () => {
 
     setIsGenerating(true);
     try {
+      let imageData = null;
+      if (uploadedFile) {
+        const reader = new FileReader();
+        imageData = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(uploadedFile);
+        });
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
           topic: topic.trim(),
           mood: selectedMood,
           niche: niche.trim(),
           website: website.trim(),
+          imageData,
+          language,
         }
       });
 
@@ -156,6 +193,45 @@ const Index = () => {
                     onChange={(e) => setWebsite(e.target.value)}
                     className="h-14 rounded-2xl border-border bg-muted/30 text-base"
                   />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-foreground">Upload Photo/Video (Optional)</label>
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      accept="image/*,video/*"
+                      onChange={handleFileChange}
+                      className="h-14 rounded-2xl border-border bg-muted/30 text-base file:mr-4 file:rounded-xl file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-foreground"
+                    />
+                    {uploadedFile && (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Selected: {uploadedFile.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-foreground">Language</label>
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="h-14 w-full rounded-2xl border border-border bg-muted/30 px-4 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="it">Italian</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                    <option value="zh">Chinese</option>
+                    <option value="ar">Arabic</option>
+                    <option value="hi">Hindi</option>
+                    <option value="ru">Russian</option>
+                  </select>
                 </div>
 
                 <div className="space-y-3">
