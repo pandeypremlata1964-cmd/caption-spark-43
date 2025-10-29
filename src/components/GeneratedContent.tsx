@@ -84,12 +84,21 @@ export const GeneratedContent = ({ captions, hashtags, mood, onSave }: Generated
     <div className="space-y-4">
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Caption Variations</h3>
-        {captions.map((caption, index) => (
-          <Card key={index} className="p-4 space-y-3 bg-gradient-to-br from-background to-muted border-2 shadow-card animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-primary">Option {index + 1}</span>
-                <div className="flex gap-2">
+        {captions.map((caption, index) => {
+          const wordCount = caption.split(/\s+/).length;
+          const length = wordCount <= 30 ? 'Short' : wordCount <= 60 ? 'Medium' : 'Long';
+          const lengthColor = wordCount <= 30 ? 'text-green-500' : wordCount <= 60 ? 'text-blue-500' : 'text-purple-500';
+          
+          return (
+            <Card key={index} className="p-4 space-y-3 bg-gradient-to-br from-background to-muted border-2 shadow-card animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-primary">Option {index + 1}</span>
+                    <span className={`text-xs font-medium ${lengthColor}`}>• {length}</span>
+                    <span className="text-xs text-muted-foreground">({wordCount} words)</span>
+                  </div>
+                  <div className="flex gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -107,12 +116,13 @@ export const GeneratedContent = ({ captions, hashtags, mood, onSave }: Generated
                     <Save className="w-3 h-3 mr-1" />
                     {savingIndex === index ? 'Saving...' : 'Save'}
                   </Button>
+                  </div>
                 </div>
+                <p className="text-foreground leading-relaxed">{caption}</p>
               </div>
-              <p className="text-foreground leading-relaxed">{caption}</p>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
 
       <Card className="p-4 space-y-2 bg-gradient-to-br from-background to-muted border-2 shadow-card">

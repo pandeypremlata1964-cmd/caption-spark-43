@@ -30,10 +30,13 @@ When generating:
 - Content should be relevant to the ${niche} niche
 ${website ? `- Include or reference the website: ${website}` : ''}
 ${imageData ? '- Base the captions on what you see in the image/video provided' : ''}
-- Keep captions concise (1-3 sentences)
+- Generate captions in THREE different lengths:
+  * Short captions: 1 sentence, 10-30 words (for quick posts)
+  * Medium captions: 2-3 sentences, 30-60 words (standard posts)
+  * Long captions: 4-5 sentences, 60-100 words (detailed posts with story)
 - Include 8-12 relevant, trending hashtags
 - Make hashtags specific and effective for reach
-- Generate 5 DIFFERENT caption variations with the same hashtags
+- Generate 5 DIFFERENT caption variations: 2 short, 2 medium, 1 long
 ${languageInstruction}
 
 Return ONLY a JSON object with this exact structure:
