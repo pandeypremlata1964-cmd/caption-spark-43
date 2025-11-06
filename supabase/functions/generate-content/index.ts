@@ -37,9 +37,10 @@ serve(async (req) => {
       captionTypes.push('LONG (60-100 words, 4-5 sentences): Example: "In today\'s fast-paced digital world, staying ahead of the curve is essential for success. Our comprehensive technology platform empowers businesses to streamline operations, enhance collaboration, and drive meaningful results. With features designed for modern teams, we\'ve created an ecosystem that supports growth at every stage. Whether you\'re a startup or an enterprise, our solutions scale with your needs. Experience the difference that innovative technology can make in your daily workflow."');
     }
 
-    const countShort = lengths.short ? 2 : 0;
-    const countMedium = lengths.medium ? 2 : 0;
-    const countLong = lengths.long ? 1 : 0;
+    const countShort = lengths.short ? 5 : 0;
+    const countMedium = lengths.medium ? 5 : 0;
+    const countLong = lengths.long ? 5 : 0;
+    const totalCount = countShort + countMedium + countLong;
 
     const systemPrompt = `You are a creative social media content expert. Generate engaging captions and relevant hashtags for Instagram, Twitter, and other platforms.
 
@@ -52,12 +53,13 @@ Requirements:
 ${website ? `- Include website: ${website}` : ''}
 ${imageData ? '- Base captions on the image/video content' : ''}
 - Generate EXACTLY: ${countShort} short caption(s), ${countMedium} medium caption(s), ${countLong} long caption(s) (in that order)
+- Each caption should be UNIQUE and creative with different angles/perspectives
 - Include 8-12 relevant, trending hashtags
 ${languageInstruction}
 
 Return ONLY a JSON object with this exact structure:
 {
-  "captions": [array of generated captions in order: short first, then medium, then long],
+  "captions": [array of ${totalCount} generated captions in order: all short first, then all medium, then all long],
   "hashtags": ["hashtag1", "hashtag2", "hashtag3", ...]
 }`;
 

@@ -289,7 +289,7 @@ const Index = () => {
                         htmlFor="short"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
-                        Short (10-30 words)
+                        Short (5 captions, 10-30 words each)
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -304,7 +304,7 @@ const Index = () => {
                         htmlFor="medium"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
-                        Medium (30-60 words)
+                        Medium (5 captions, 30-60 words each)
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -319,7 +319,7 @@ const Index = () => {
                         htmlFor="long"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
-                        Long (60-100 words)
+                        Long (5 captions, 60-100 words each)
                       </label>
                     </div>
                   </div>
