@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Chrome } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,25 +13,6 @@ export const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,25 +103,6 @@ export const AuthForm = () => {
             {isLoading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
           </Button>
         </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
-          </div>
-        </div>
-
-        <Button
-          onClick={handleGoogleSignIn}
-          disabled={isLoading}
-          variant="outline"
-          className="w-full h-14 rounded-2xl border-border hover:bg-muted/50"
-        >
-          <Chrome className="w-5 h-5 mr-2" />
-          Google
-        </Button>
 
         <div className="text-center">
           <button
