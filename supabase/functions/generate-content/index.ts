@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, mood, niche, website, imageData, language } = await req.json();
+    const { topic, mood, niche, website, imageData, language, captionLengths } = await req.json();
     console.log('Generating content for:', { topic, mood, niche, website, hasImage: !!imageData, language });
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -23,31 +23,41 @@ serve(async (req) => {
       ? `- Generate all captions in ${language} language` 
       : '- Generate captions in English';
 
+    // Determine which caption types to generate
+    const lengths = captionLengths || { short: true, medium: true, long: true };
+    const captionTypes = [];
+    
+    if (lengths.short) {
+      captionTypes.push('SHORT (10-30 words, 1 sentence): Example: "Transform your workspace with cutting-edge technology that boosts productivity and creativity."');
+    }
+    if (lengths.medium) {
+      captionTypes.push('MEDIUM (30-60 words, 2-3 sentences): Example: "Discover the future of innovation with our latest tech solutions. We\'re revolutionizing the way businesses operate with smart, efficient tools. Join thousands of satisfied customers today."');
+    }
+    if (lengths.long) {
+      captionTypes.push('LONG (60-100 words, 4-5 sentences): Example: "In today\'s fast-paced digital world, staying ahead of the curve is essential for success. Our comprehensive technology platform empowers businesses to streamline operations, enhance collaboration, and drive meaningful results. With features designed for modern teams, we\'ve created an ecosystem that supports growth at every stage. Whether you\'re a startup or an enterprise, our solutions scale with your needs. Experience the difference that innovative technology can make in your daily workflow."');
+    }
+
+    const countShort = lengths.short ? 2 : 0;
+    const countMedium = lengths.medium ? 2 : 0;
+    const countLong = lengths.long ? 1 : 0;
+
     const systemPrompt = `You are a creative social media content expert. Generate engaging captions and relevant hashtags for Instagram, Twitter, and other platforms.
 
-CRITICAL: You MUST generate captions in THREE different lengths:
-
-1. SHORT (10-30 words, 1 sentence):
-   Example: "Transform your workspace with cutting-edge technology that boosts productivity and creativity."
-
-2. MEDIUM (30-60 words, 2-3 sentences):
-   Example: "Discover the future of innovation with our latest tech solutions. We're revolutionizing the way businesses operate with smart, efficient tools. Join thousands of satisfied customers today."
-
-3. LONG (60-100 words, 4-5 sentences):
-   Example: "In today's fast-paced digital world, staying ahead of the curve is essential for success. Our comprehensive technology platform empowers businesses to streamline operations, enhance collaboration, and drive meaningful results. With features designed for modern teams, we've created an ecosystem that supports growth at every stage. Whether you're a startup or an enterprise, our solutions scale with your needs. Experience the difference that innovative technology can make in your daily workflow."
+CRITICAL: Generate captions in the following lengths:
+${captionTypes.join('\n')}
 
 Requirements:
 - Tone: ${mood}
 - Niche: ${niche}
 ${website ? `- Include website: ${website}` : ''}
 ${imageData ? '- Base captions on the image/video content' : ''}
-- Generate EXACTLY: 2 short captions, 2 medium captions, 1 long caption (in that order)
+- Generate EXACTLY: ${countShort} short caption(s), ${countMedium} medium caption(s), ${countLong} long caption(s) (in that order)
 - Include 8-12 relevant, trending hashtags
 ${languageInstruction}
 
 Return ONLY a JSON object with this exact structure:
 {
-  "captions": ["short caption 1", "short caption 2", "medium caption 1", "medium caption 2", "long caption"],
+  "captions": [array of generated captions in order: short first, then medium, then long],
   "hashtags": ["hashtag1", "hashtag2", "hashtag3", ...]
 }`;
 

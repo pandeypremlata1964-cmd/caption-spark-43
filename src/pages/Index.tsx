@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MoodSelector } from "@/components/MoodSelector";
 import { GeneratedContent } from "@/components/GeneratedContent";
@@ -22,6 +23,11 @@ const Index = () => {
   const [topic, setTopic] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [language, setLanguage] = useState("en");
+  const [captionLengths, setCaptionLengths] = useState({
+    short: true,
+    medium: true,
+    long: true,
+  });
   const [generatedContent, setGeneratedContent] = useState<{captions: string[]; hashtags: string[]} | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [refreshSaved, setRefreshSaved] = useState(0);
@@ -75,6 +81,15 @@ const Index = () => {
       return;
     }
 
+    if (!captionLengths.short && !captionLengths.medium && !captionLengths.long) {
+      toast({
+        title: "Select caption length",
+        description: "Please select at least one caption length",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
       let imageData = null;
@@ -94,6 +109,7 @@ const Index = () => {
           website: website.trim(),
           imageData,
           language,
+          captionLengths,
         }
       });
 
@@ -108,9 +124,10 @@ const Index = () => {
       }
 
       setGeneratedContent(data);
+      const totalCaptions = data.captions.length;
       toast({
         title: "Generated!",
-        description: "5 caption variations and hashtags are ready",
+        description: `${totalCaptions} caption${totalCaptions !== 1 ? 's' : ''} and hashtags are ready`,
       });
     } catch (error: any) {
       console.error('Error generating content:', error);
@@ -256,6 +273,57 @@ const Index = () => {
                 </div>
 
                 <MoodSelector selectedMood={selectedMood} onMoodChange={setSelectedMood} />
+
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-foreground">Caption Lengths</label>
+                  <div className="flex flex-wrap gap-4 p-4 bg-muted/30 rounded-2xl">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="short"
+                        checked={captionLengths.short}
+                        onCheckedChange={(checked) => 
+                          setCaptionLengths(prev => ({ ...prev, short: checked as boolean }))
+                        }
+                      />
+                      <label
+                        htmlFor="short"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Short (10-30 words)
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="medium"
+                        checked={captionLengths.medium}
+                        onCheckedChange={(checked) => 
+                          setCaptionLengths(prev => ({ ...prev, medium: checked as boolean }))
+                        }
+                      />
+                      <label
+                        htmlFor="medium"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Medium (30-60 words)
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="long"
+                        checked={captionLengths.long}
+                        onCheckedChange={(checked) => 
+                          setCaptionLengths(prev => ({ ...prev, long: checked as boolean }))
+                        }
+                      />
+                      <label
+                        htmlFor="long"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Long (60-100 words)
+                      </label>
+                    </div>
+                  </div>
+                </div>
 
                 <Button
                   onClick={handleGenerate}
