@@ -4,6 +4,7 @@ import { Copy, Save, Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CharacterCounter } from "@/components/CharacterCounter";
 
 interface GeneratedContentProps {
   captions: string[];
@@ -91,7 +92,7 @@ export const GeneratedContent = ({ captions, hashtags, mood, onSave }: Generated
           
           return (
             <Card key={index} className="p-4 space-y-3 bg-gradient-to-br from-background to-muted border-2 shadow-card animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-primary">Option {index + 1}</span>
@@ -119,6 +120,7 @@ export const GeneratedContent = ({ captions, hashtags, mood, onSave }: Generated
                   </div>
                 </div>
                 <p className="text-foreground leading-relaxed">{caption}</p>
+                <CharacterCounter text={caption} />
               </div>
             </Card>
           );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,11 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MoodSelector } from "@/components/MoodSelector";
 import { GeneratedContent } from "@/components/GeneratedContent";
 import { SavedPosts } from "@/components/SavedPosts";
-import { AuthForm } from "@/components/AuthForm";
+import { LandingPage } from "@/components/LandingPage";
+import { OnboardingTour } from "@/components/OnboardingTour";
+import { CaptionTemplates } from "@/components/CaptionTemplates";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, LogOut, Loader2 } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
+import { captionInputSchema, validateFile, debounce } from "@/utils/inputSanitization";
+import { GeneratedContentSkeleton } from "@/components/LoadingSkeleton";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -31,6 +35,8 @@ const Index = () => {
   const [generatedContent, setGeneratedContent] = useState<{captions: string[]; hashtags: string[]} | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [refreshSaved, setRefreshSaved] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,22 +53,34 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const debouncedValidation = useCallback(
+    debounce((field: string, value: string) => {
+      try {
+        if (field === 'niche') {
+          captionInputSchema.shape.niche.parse(value);
+          setValidationErrors(prev => ({ ...prev, niche: '' }));
+        } else if (field === 'website' && value) {
+          captionInputSchema.shape.website.parse(value);
+          setValidationErrors(prev => ({ ...prev, website: '' }));
+        }
+      } catch (error: any) {
+        setValidationErrors(prev => ({ 
+          ...prev, 
+          [field]: error.errors[0]?.message || 'Invalid input' 
+        }));
+      }
+    }, 500),
+    []
+  );
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime'];
-      if (!validTypes.includes(file.type)) {
+      const validation = validateFile(file);
+      if (!validation.valid) {
         toast({
-          title: "Invalid file type",
-          description: "Please upload an image (JPG, PNG, GIF, WEBP) or video (MP4, MOV)",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (file.size > 20 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please upload a file smaller than 20MB",
+          title: "Invalid file",
+          description: validation.error,
           variant: "destructive",
         });
         return;
@@ -72,19 +90,28 @@ const Index = () => {
   };
 
   const handleGenerate = async () => {
-    if (!niche.trim()) {
-      toast({
-        title: "Missing information",
-        description: "Please enter your niche",
-        variant: "destructive",
+    try {
+      // Validate inputs
+      const validatedData = captionInputSchema.parse({
+        niche: niche.trim(),
+        website: website.trim() || undefined,
+        topic: topic.trim() || undefined,
+        mood: selectedMood,
+        language,
       });
-      return;
-    }
 
-    if (!captionLengths.short && !captionLengths.medium && !captionLengths.long) {
+      if (!captionLengths.short && !captionLengths.medium && !captionLengths.long) {
+        toast({
+          title: "Select caption length",
+          description: "Please select at least one caption length",
+          variant: "destructive",
+        });
+        return;
+      }
+    } catch (error: any) {
       toast({
-        title: "Select caption length",
-        description: "Please select at least one caption length",
+        title: "Validation Error",
+        description: error.errors[0]?.message || "Please check your inputs",
         variant: "destructive",
       });
       return;
@@ -149,12 +176,23 @@ const Index = () => {
     });
   };
 
+  const handleUseTemplate = (template: any) => {
+    setNiche(template.niche);
+    setTopic(template.topic);
+    setSelectedMood(template.mood);
+    toast({
+      title: "Template applied!",
+      description: "You can now customize and generate captions",
+    });
+  };
+
   if (!user) {
-    return <AuthForm />;
+    return <LandingPage />;
   }
 
   return (
     <div className="min-h-screen bg-background">
+      <OnboardingTour onComplete={() => setShowOnboarding(false)} />
       <div className="container max-w-6xl mx-auto p-4 md:p-8">
         <header className="mb-8 md:mb-12">
           <div className="flex items-center justify-between">
@@ -188,6 +226,8 @@ const Index = () => {
 
 
           <TabsContent value="generate" className="space-y-6">
+            <CaptionTemplates onUseTemplate={handleUseTemplate} />
+            
             <Card className="p-6 md:p-8 space-y-6 bg-card shadow-card rounded-3xl border-0">
               <div className="space-y-5">
                 <div className="space-y-3">
@@ -197,9 +237,17 @@ const Index = () => {
                   <Input
                     placeholder="e.g., Fitness, Travel, Food, Tech..."
                     value={niche}
-                    onChange={(e) => setNiche(e.target.value)}
+                    onChange={(e) => {
+                      setNiche(e.target.value);
+                      debouncedValidation('niche', e.target.value);
+                    }}
                     className="h-14 rounded-2xl border-border bg-muted/30 text-base"
+                    aria-label="Niche input"
+                    aria-invalid={!!validationErrors.niche}
                   />
+                  {validationErrors.niche && (
+                    <p className="text-sm text-destructive">{validationErrors.niche}</p>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -207,9 +255,16 @@ const Index = () => {
                   <Input
                     placeholder="e.g., yourwebsite.com"
                     value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
+                    onChange={(e) => {
+                      setWebsite(e.target.value);
+                      debouncedValidation('website', e.target.value);
+                    }}
                     className="h-14 rounded-2xl border-border bg-muted/30 text-base"
+                    aria-label="Website input"
                   />
+                  {validationErrors.website && (
+                    <p className="text-sm text-destructive">{validationErrors.website}</p>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -345,7 +400,9 @@ const Index = () => {
               </div>
             </Card>
 
-            {generatedContent && (
+            {isGenerating && <GeneratedContentSkeleton />}
+            
+            {!isGenerating && generatedContent && (
               <GeneratedContent
                 captions={generatedContent.captions}
                 hashtags={generatedContent.hashtags}

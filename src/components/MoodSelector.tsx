@@ -21,7 +21,7 @@ export const MoodSelector = ({ selectedMood, onMoodChange }: MoodSelectorProps) 
   return (
     <div className="space-y-3">
       <label className="text-sm font-semibold text-foreground">Select Mood</label>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {moods.map((mood) => {
           const Icon = mood.icon;
           const isSelected = selectedMood === mood.value;
