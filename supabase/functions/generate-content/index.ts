@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,56 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Please login' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid session' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check user's quota
+    const { data: quotaData, error: quotaError } = await supabase
+      .rpc('get_user_quota', { user_id_param: user.id });
+
+    if (quotaError) {
+      console.error('Error checking quota:', quotaError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to check usage limits' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const quota = quotaData?.[0];
+    console.log('User quota:', quota);
+
+    if (!quota || quota.remaining <= 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Daily limit reached',
+          message: `You've used all ${quota?.daily_limit || 3} generations for today. Upgrade to get unlimited access!`,
+          upgradeRequired: true
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { topic, mood, niche, website, imageData, language, captionLengths } = await req.json();
     console.log('Generating content for:', { topic, mood, niche, website, hasImage: !!imageData, language });
 
@@ -146,8 +197,32 @@ Return ONLY a JSON object with this exact structure:
       throw new Error('Failed to parse AI response');
     }
 
+    // Increment usage count
+    const { error: usageError } = await supabase
+      .from('daily_usage')
+      .upsert({
+        user_id: user.id,
+        usage_date: new Date().toISOString().split('T')[0],
+        generation_count: (quota.used_today || 0) + 1
+      }, {
+        onConflict: 'user_id,usage_date'
+      });
+
+    if (usageError) {
+      console.error('Error updating usage:', usageError);
+    } else {
+      console.log('Usage updated successfully');
+    }
+
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        ...result,
+        usage: {
+          used: (quota.used_today || 0) + 1,
+          limit: quota.daily_limit,
+          remaining: quota.remaining - 1
+        }
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

@@ -11,12 +11,14 @@ import { SavedPosts } from "@/components/SavedPosts";
 import { LandingPage } from "@/components/LandingPage";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CaptionTemplates } from "@/components/CaptionTemplates";
+import { UsageTracker } from "@/components/UsageTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, LogOut, Loader2 } from "lucide-react";
+import { Sparkles, LogOut, Loader2, Crown } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { captionInputSchema, validateFile, debounce } from "@/utils/inputSanitization";
 import { GeneratedContentSkeleton } from "@/components/LoadingSkeleton";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,12 +34,13 @@ const Index = () => {
     medium: true,
     long: true,
   });
-  const [generatedContent, setGeneratedContent] = useState<{captions: string[]; hashtags: string[]} | null>(null);
+  const [generatedContent, setGeneratedContent] = useState<{captions: string[]; hashtags: string[]; usage?: any} | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [refreshSaved, setRefreshSaved] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -141,8 +144,24 @@ const Index = () => {
       });
 
       if (error) {
-        if (error.message.includes('429')) {
-          throw new Error('Rate limit exceeded. Please try again in a moment.');
+        // Check for quota exceeded
+        if (error.message?.includes('Daily limit reached') || error.message?.includes('429')) {
+          toast({
+            title: "Daily Limit Reached",
+            description: "Upgrade to get unlimited caption generations!",
+            variant: "destructive",
+            action: (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/pricing')}
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade
+              </Button>
+            ),
+          });
+          return;
         }
         if (error.message.includes('402')) {
           throw new Error('AI credits depleted. Please add credits to continue.');
@@ -154,7 +173,9 @@ const Index = () => {
       const totalCaptions = data.captions.length;
       toast({
         title: "Generated!",
-        description: `${totalCaptions} caption${totalCaptions !== 1 ? 's' : ''} and hashtags are ready`,
+        description: data.usage 
+          ? `${totalCaptions} caption${totalCaptions !== 1 ? 's' : ''} generated! ${data.usage.remaining} generations left today.`
+          : `${totalCaptions} caption${totalCaptions !== 1 ? 's' : ''} and hashtags are ready`,
       });
     } catch (error: any) {
       console.error('Error generating content:', error);
@@ -195,7 +216,7 @@ const Index = () => {
       <OnboardingTour onComplete={() => setShowOnboarding(false)} />
       <div className="container max-w-6xl mx-auto p-4 md:p-8">
         <header className="mb-8 md:mb-12">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-elegant">
                 <Sparkles className="w-7 h-7 text-white" />
@@ -207,10 +228,25 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">AI-powered caption generator</p>
               </div>
             </div>
-            <Button onClick={handleLogout} variant="outline" size="sm" className="rounded-full">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={() => navigate('/pricing')} 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade
+              </Button>
+              <Button onClick={handleLogout} variant="outline" size="sm" className="rounded-full">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <UsageTracker />
           </div>
         </header>
 
