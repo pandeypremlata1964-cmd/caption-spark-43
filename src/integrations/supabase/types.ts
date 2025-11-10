@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_usage: {
+        Row: {
+          created_at: string
+          generation_count: number
+          id: string
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generation_count?: number
+          id?: string
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generation_count?: number
+          id?: string
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_posts: {
         Row: {
           caption: string
@@ -41,15 +68,62 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          razorpay_payment_id: string | null
+          razorpay_subscription_id: string | null
+          started_at: string
+          status: string
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          started_at?: string
+          status?: string
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          started_at?: string
+          status?: string
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_quota: {
+        Args: { user_id_param: string }
+        Returns: {
+          daily_limit: number
+          remaining: number
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          used_today: number
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      subscription_tier: "freemium" | "monthly" | "six_months" | "yearly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -176,6 +250,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      subscription_tier: ["freemium", "monthly", "six_months", "yearly"],
+    },
   },
 } as const
