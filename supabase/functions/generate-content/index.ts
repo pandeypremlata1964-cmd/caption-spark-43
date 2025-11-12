@@ -105,7 +105,7 @@ ${website ? `- Include website: ${website}` : ''}
 ${imageData ? '- Base captions on the image/video content' : ''}
 - Generate EXACTLY: ${countShort} short caption(s), ${countMedium} medium caption(s), ${countLong} long caption(s) (in that order)
 - Each caption should be UNIQUE and creative with different angles/perspectives
-- Include 8-12 relevant, trending hashtags
+- Include 2 relevant, trending hashtags
 ${languageInstruction}
 
 Return ONLY a JSON object with this exact structure:
