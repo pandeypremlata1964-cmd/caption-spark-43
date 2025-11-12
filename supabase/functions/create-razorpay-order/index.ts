@@ -73,6 +73,24 @@ serve(async (req) => {
     const order = await razorpayResponse.json();
     console.log('Razorpay order created:', order.id);
 
+    // Create payment history record
+    const { error: historyError } = await supabase
+      .from('payment_history')
+      .insert({
+        user_id: user.id,
+        amount: amount,
+        currency: 'INR',
+        tier: tier,
+        duration_months: durationMonths,
+        razorpay_order_id: order.id,
+        status: 'pending'
+      });
+
+    if (historyError) {
+      console.error('Error creating payment history:', historyError);
+      // Don't fail the order creation if history fails
+    }
+
     return new Response(
       JSON.stringify({
         orderId: order.id,

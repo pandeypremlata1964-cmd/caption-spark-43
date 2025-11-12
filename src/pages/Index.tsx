@@ -14,7 +14,7 @@ import { CaptionTemplates } from "@/components/CaptionTemplates";
 import { UsageTracker } from "@/components/UsageTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, LogOut, Loader2, Crown } from "lucide-react";
+import { Sparkles, LogOut, Loader2, Crown, Settings } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { captionInputSchema, validateFile, debounce } from "@/utils/inputSanitization";
 import { GeneratedContentSkeleton } from "@/components/LoadingSkeleton";
@@ -229,6 +229,15 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Button 
+                onClick={() => navigate('/subscription')} 
+                variant="ghost" 
+                size="sm" 
+                className="rounded-full"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Subscription
+              </Button>
               <Button 
                 onClick={() => navigate('/pricing')} 
                 variant="outline" 

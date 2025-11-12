@@ -63,6 +63,14 @@ serve(async (req) => {
     const expiresAt = new Date(now);
     expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
 
+    // Fetch order details to get amount
+    const { data: orderData } = await supabase
+      .from('payment_history')
+      .select('amount')
+      .eq('razorpay_order_id', razorpay_order_id)
+      .eq('user_id', user.id)
+      .single();
+
     // Create subscription record
     const { error: insertError } = await supabase
       .from('subscriptions')
@@ -78,6 +86,22 @@ serve(async (req) => {
     if (insertError) {
       console.error('Error creating subscription:', insertError);
       throw insertError;
+    }
+
+    // Update payment history to success
+    const { error: updateError } = await supabase
+      .from('payment_history')
+      .update({
+        razorpay_payment_id: razorpay_payment_id,
+        razorpay_signature: razorpay_signature,
+        status: 'success'
+      })
+      .eq('razorpay_order_id', razorpay_order_id)
+      .eq('user_id', user.id);
+
+    if (updateError) {
+      console.error('Error updating payment history:', updateError);
+      // Don't fail if history update fails
     }
 
     console.log('Subscription created successfully');
