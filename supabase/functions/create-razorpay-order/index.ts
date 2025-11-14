@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,7 +33,26 @@ serve(async (req) => {
       );
     }
 
-    const { amount, tier, durationMonths } = await req.json();
+    // Define validation schema
+    const requestSchema = z.object({
+      amount: z.number().int().positive().max(1000000),
+      tier: z.enum(['monthly', 'six_months', 'yearly']),
+      durationMonths: z.number().int().positive().max(12)
+    });
+
+    // Parse and validate request body
+    const rawBody = await req.json();
+    const validationResult = requestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error('Validation error:', validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ error: 'Invalid input', details: validationResult.error.issues }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { amount, tier, durationMonths } = validationResult.data;
 
     console.log('Creating Razorpay order:', { amount, tier, durationMonths, userId: user.id });
 

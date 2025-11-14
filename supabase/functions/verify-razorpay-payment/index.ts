@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts";
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,13 +33,34 @@ serve(async (req) => {
       );
     }
 
+    // Define validation schema
+    const requestSchema = z.object({
+      razorpay_order_id: z.string().min(1).max(100),
+      razorpay_payment_id: z.string().min(1).max(100),
+      razorpay_signature: z.string().min(1).max(200),
+      tier: z.enum(['monthly', 'six_months', 'yearly']),
+      durationMonths: z.number().int().positive().max(12)
+    });
+
+    // Parse and validate request body
+    const rawBody = await req.json();
+    const validationResult = requestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error('Validation error:', validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ error: 'Invalid input', details: validationResult.error.issues }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { 
       razorpay_order_id, 
       razorpay_payment_id, 
       razorpay_signature,
       tier,
       durationMonths
-    } = await req.json();
+    } = validationResult.data;
 
     console.log('Verifying payment:', { razorpay_order_id, razorpay_payment_id, tier, userId: user.id });
 

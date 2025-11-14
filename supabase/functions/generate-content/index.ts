@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,7 +63,34 @@ serve(async (req) => {
       );
     }
 
-    const { topic, mood, niche, website, imageData, language, captionLengths } = await req.json();
+    // Define validation schema
+    const requestSchema = z.object({
+      topic: z.string().max(1000).optional(),
+      mood: z.enum(['playful', 'professional', 'inspirational', 'casual', 'energetic', 'motivational', 'educational', 'celebratory']),
+      niche: z.string().min(1).max(100).regex(/^[a-zA-Z0-9\s\-_,.!&]+$/),
+      website: z.string().max(255).optional(),
+      imageData: z.string().optional(),
+      language: z.string().length(2),
+      captionLengths: z.object({
+        short: z.boolean(),
+        medium: z.boolean(),
+        long: z.boolean()
+      })
+    });
+
+    // Parse and validate request body
+    const rawBody = await req.json();
+    const validationResult = requestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error('Validation error:', validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ error: 'Invalid input', details: validationResult.error.issues }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { topic, mood, niche, website, imageData, language, captionLengths } = validationResult.data;
     console.log('Generating content for:', { topic, mood, niche, website, hasImage: !!imageData, language });
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
