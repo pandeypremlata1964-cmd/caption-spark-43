@@ -12,6 +12,7 @@ import { LandingPage } from "@/components/LandingPage";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CaptionTemplates } from "@/components/CaptionTemplates";
 import { UsageTracker } from "@/components/UsageTracker";
+import { TrendingHashtags } from "@/components/TrendingHashtags";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, LogOut, Loader2, Crown, Settings } from "lucide-react";
@@ -373,6 +374,8 @@ const Index = () => {
                 </div>
 
                 <MoodSelector selectedMood={selectedMood} onMoodChange={setSelectedMood} />
+
+                <TrendingHashtags niche={niche} mood={selectedMood} />
 
                 <div className="space-y-3">
                   <label className="text-sm font-semibold text-foreground">Caption Lengths</label>

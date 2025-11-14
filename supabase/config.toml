@@ -2,3 +2,6 @@ project_id = "qmmjsigaewiirsjhxkpm"
 
 [functions.generate-content]
 verify_jwt = true
+
+[functions.get-trending-hashtags]
+verify_jwt = true
