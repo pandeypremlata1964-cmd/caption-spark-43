@@ -65,11 +65,11 @@ serve(async (req) => {
 
     // Define validation schema
     const requestSchema = z.object({
-      topic: z.string().max(1000).optional(),
+      topic: z.string().max(1000).nullish(),
       mood: z.enum(['playful', 'professional', 'inspirational', 'casual', 'energetic', 'motivational', 'educational', 'celebratory']),
       niche: z.string().min(1).max(100).regex(/^[a-zA-Z0-9\s\-_,.!&]+$/),
-      website: z.string().max(255).optional(),
-      imageData: z.string().optional(),
+      website: z.string().max(255).nullish(),
+      imageData: z.string().nullish(),
       language: z.string().length(2),
       captionLengths: z.object({
         short: z.boolean(),
