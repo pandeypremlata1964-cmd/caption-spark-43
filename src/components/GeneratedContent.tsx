@@ -145,7 +145,7 @@ export const GeneratedContent = ({ captions, hashtags, mood, onSave }: Generated
               key={index}
               className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
             >
-              #{tag}
+              {tag}
             </span>
           ))}
         </div>
