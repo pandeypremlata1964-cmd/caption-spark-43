@@ -306,7 +306,7 @@ export const SavedPosts = () => {
               <div className="flex flex-wrap gap-2">
                 {post.hashtags.slice(0, 5).map((tag, index) => (
                   <span key={index} className="text-sm text-muted-foreground">
-                    #{tag}
+                    {tag}
                   </span>
                 ))}
                 {post.hashtags.length > 5 && (
