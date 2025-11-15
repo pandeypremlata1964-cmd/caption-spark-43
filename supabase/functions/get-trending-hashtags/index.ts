@@ -14,7 +14,8 @@ serve(async (req) => {
   try {
     const requestSchema = z.object({
       niche: z.string().min(1).max(100),
-      mood: z.string()
+      mood: z.string(),
+      platform: z.enum(['all', 'instagram', 'tiktok', 'twitter']).default('all')
     });
 
     const rawBody = await req.json();
@@ -33,15 +34,24 @@ serve(async (req) => {
       );
     }
 
-    const { niche, mood } = validation.data;
+    const { niche, mood, platform } = validation.data;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are a social media expert specializing in trending hashtags. Generate 8-10 currently trending and relevant hashtags for the given niche and mood. Focus on:
-- Popular hashtags that are actively trending
+    const platformGuidance = platform === 'all' 
+      ? 'Instagram, TikTok, and Twitter'
+      : platform === 'instagram'
+      ? 'Instagram (focus on visual content, aesthetics, and community)'
+      : platform === 'tiktok'
+      ? 'TikTok (focus on viral trends, challenges, and entertainment)'
+      : 'Twitter (focus on conversations, news, and concise messaging)';
+
+    const systemPrompt = `You are a social media expert specializing in trending hashtags. Generate 8-10 currently trending and relevant hashtags for the given niche, mood, and platform. Focus on:
+- Popular hashtags that are actively trending on ${platformGuidance}
+- Platform-specific hashtags that perform well
 - Niche-specific hashtags with good engagement
 - Mix of broad and specific hashtags
 - Hashtags that match the mood/tone
@@ -55,8 +65,9 @@ Return ONLY a JSON object with this exact structure:
     const userPrompt = `Generate trending hashtags for:
 Niche: ${niche}
 Mood: ${mood}
+Platform: ${platformGuidance}
 
-Provide 8-10 trending hashtags that would perform well on social media platforms like Instagram, TikTok, and Twitter.`;
+Provide 8-10 trending hashtags optimized for ${platformGuidance}.`;
 
     console.log('Calling Lovable AI for trending hashtags...');
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
