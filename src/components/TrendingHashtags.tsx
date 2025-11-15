@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
+type Platform = "all" | "instagram" | "tiktok" | "twitter";
+
 interface TrendingHashtagsProps {
   niche: string;
   mood: string;
@@ -16,19 +18,20 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
   const [trendingTags, setTrendingTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [platform, setPlatform] = useState<Platform>("all");
   const { toast } = useToast();
 
   useEffect(() => {
     if (niche) {
       fetchTrendingHashtags();
     }
-  }, [niche, mood]);
+  }, [niche, mood, platform]);
 
   const fetchTrendingHashtags = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('get-trending-hashtags', {
-        body: { niche, mood }
+        body: { niche, mood, platform }
       });
 
       if (error) throw error;
@@ -79,6 +82,20 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
             {copiedAll ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </Button>
         )}
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        {(["all", "instagram", "tiktok", "twitter"] as Platform[]).map((p) => (
+          <Button
+            key={p}
+            variant={platform === p ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPlatform(p)}
+            className="h-8 text-xs capitalize"
+          >
+            {p}
+          </Button>
+        ))}
       </div>
       
       {isLoading ? (
