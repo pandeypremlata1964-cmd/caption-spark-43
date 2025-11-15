@@ -56,11 +56,24 @@ serve(async (req) => {
 - Mix of broad and specific hashtags
 - Hashtags that match the mood/tone
 - Include the # symbol in each hashtag
+- Provide realistic performance metrics for each hashtag
 
 Return ONLY a JSON object with this exact structure:
 {
-  "hashtags": ["#hashtag1", "#hashtag2", ...]
-}`;
+  "hashtags": [
+    {
+      "tag": "#hashtag1",
+      "estimatedReach": 50000,
+      "engagementRate": 3.5,
+      "trendingScore": 85
+    }
+  ]
+}
+
+Performance metrics guidelines:
+- estimatedReach: number between 10,000 and 5,000,000 (potential impressions)
+- engagementRate: number between 1.0 and 8.0 (percentage)
+- trendingScore: number between 50 and 100 (trending popularity score)`;
 
     const userPrompt = `Generate trending hashtags for:
 Niche: ${niche}
@@ -123,8 +136,15 @@ Provide 8-10 trending hashtags optimized for ${platformGuidance}.`;
       throw new Error('Invalid hashtags format from AI');
     }
 
+    // Validate hashtag objects have required fields
+    const validHashtags = parsed.hashtags.filter((h: any) => 
+      h.tag && typeof h.estimatedReach === 'number' && 
+      typeof h.engagementRate === 'number' && 
+      typeof h.trendingScore === 'number'
+    );
+
     return new Response(
-      JSON.stringify({ hashtags: parsed.hashtags }),
+      JSON.stringify({ hashtags: validHashtags }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
