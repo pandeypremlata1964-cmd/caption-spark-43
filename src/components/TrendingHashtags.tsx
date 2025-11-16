@@ -2,13 +2,21 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Copy, Check, Eye, Heart, BarChart3 } from "lucide-react";
+import { TrendingUp, Copy, Check, Eye, Heart, BarChart3, Sparkles, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Platform = "all" | "instagram" | "tiktok" | "twitter";
+type SortOption = "trending" | "reach" | "engagement";
 
 interface HashtagMetrics {
   tag: string;
@@ -26,7 +34,9 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
   const [trendingTags, setTrendingTags] = useState<HashtagMetrics[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [copiedOptimal, setCopiedOptimal] = useState(false);
   const [platform, setPlatform] = useState<Platform>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("trending");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,6 +87,52 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
     return num.toString();
   };
 
+  const getSortedHashtags = () => {
+    const sorted = [...trendingTags];
+    switch (sortBy) {
+      case "reach":
+        return sorted.sort((a, b) => b.estimatedReach - a.estimatedReach);
+      case "engagement":
+        return sorted.sort((a, b) => b.engagementRate - a.engagementRate);
+      case "trending":
+      default:
+        return sorted.sort((a, b) => b.trendingScore - a.trendingScore);
+    }
+  };
+
+  const suggestOptimalSet = () => {
+    if (trendingTags.length === 0) return;
+
+    // Algorithm: Pick 5-10 hashtags with balanced performance
+    // - 2-3 high reach hashtags (top reach)
+    // - 2-3 high engagement hashtags (top engagement)
+    // - 2-3 trending hashtags (top trending score)
+    // Remove duplicates and limit to 10
+    
+    const byReach = [...trendingTags].sort((a, b) => b.estimatedReach - a.estimatedReach).slice(0, 3);
+    const byEngagement = [...trendingTags].sort((a, b) => b.engagementRate - a.engagementRate).slice(0, 3);
+    const byTrending = [...trendingTags].sort((a, b) => b.trendingScore - a.trendingScore).slice(0, 3);
+    
+    // Combine and remove duplicates
+    const optimalSet = Array.from(
+      new Map(
+        [...byReach, ...byEngagement, ...byTrending].map(item => [item.tag, item])
+      ).values()
+    ).slice(0, 10);
+    
+    const optimalText = optimalSet.map(h => h.tag).join(' ');
+    navigator.clipboard.writeText(optimalText);
+    setCopiedOptimal(true);
+    setTimeout(() => setCopiedOptimal(false), 2000);
+    
+    toast({
+      title: "Optimal Set Copied!",
+      description: `${optimalSet.length} hashtags copied (balanced for reach, engagement & trending)`,
+    });
+  };
+
+  const sortedHashtags = getSortedHashtags();
+
   if (!niche) return null;
 
   return (
@@ -87,14 +143,25 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
           <h3 className="text-sm font-semibold text-foreground">Trending Hashtags</h3>
         </div>
         {trendingTags.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={copyAllHashtags}
-            className="h-8"
-          >
-            {copiedAll ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={suggestOptimalSet}
+              className="h-8 gap-1"
+            >
+              {copiedOptimal ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+              <span className="hidden sm:inline">Optimal Set</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={copyAllHashtags}
+              className="h-8"
+            >
+              {copiedAll ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -111,6 +178,22 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
           </Button>
         ))}
       </div>
+
+      {trendingTags.length > 0 && (
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+          <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+            <SelectTrigger className="h-8 w-[160px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="trending">Sort by Trending</SelectItem>
+              <SelectItem value="reach">Sort by Reach</SelectItem>
+              <SelectItem value="engagement">Sort by Engagement</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="flex flex-wrap gap-2">
@@ -121,7 +204,7 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
       ) : (
         <TooltipProvider>
           <div className="space-y-2">
-            {trendingTags.map((hashtag, index) => (
+            {sortedHashtags.map((hashtag, index) => (
               <div
                 key={index}
                 className="group p-3 rounded-lg border bg-card hover:bg-accent/5 transition-all cursor-pointer"
