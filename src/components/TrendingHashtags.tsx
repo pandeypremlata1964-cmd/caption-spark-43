@@ -14,6 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Platform = "all" | "instagram" | "tiktok" | "twitter";
 type SortOption = "trending" | "reach" | "engagement";
@@ -37,6 +44,8 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
   const [copiedOptimal, setCopiedOptimal] = useState(false);
   const [platform, setPlatform] = useState<Platform>("all");
   const [sortBy, setSortBy] = useState<SortOption>("trending");
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [optimalSet, setOptimalSet] = useState<Array<HashtagMetrics & { reason: string }>>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -104,22 +113,39 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
     if (trendingTags.length === 0) return;
 
     // Algorithm: Pick 5-10 hashtags with balanced performance
-    // - 2-3 high reach hashtags (top reach)
-    // - 2-3 high engagement hashtags (top engagement)
-    // - 2-3 trending hashtags (top trending score)
-    // Remove duplicates and limit to 10
-    
     const byReach = [...trendingTags].sort((a, b) => b.estimatedReach - a.estimatedReach).slice(0, 3);
     const byEngagement = [...trendingTags].sort((a, b) => b.engagementRate - a.engagementRate).slice(0, 3);
     const byTrending = [...trendingTags].sort((a, b) => b.trendingScore - a.trendingScore).slice(0, 3);
     
+    // Track which hashtags were selected for which reason
+    const hashtagReasons = new Map<string, string>();
+    byReach.forEach(h => hashtagReasons.set(h.tag, "High Reach"));
+    byEngagement.forEach(h => {
+      const existing = hashtagReasons.get(h.tag);
+      hashtagReasons.set(h.tag, existing ? `${existing} + High Engagement` : "High Engagement");
+    });
+    byTrending.forEach(h => {
+      const existing = hashtagReasons.get(h.tag);
+      hashtagReasons.set(h.tag, existing ? `${existing} + Trending` : "Trending");
+    });
+    
     // Combine and remove duplicates
-    const optimalSet = Array.from(
+    const uniqueHashtags = Array.from(
       new Map(
         [...byReach, ...byEngagement, ...byTrending].map(item => [item.tag, item])
       ).values()
     ).slice(0, 10);
+
+    const optimalWithReasons = uniqueHashtags.map(h => ({
+      ...h,
+      reason: hashtagReasons.get(h.tag) || "Selected"
+    }));
     
+    setOptimalSet(optimalWithReasons);
+    setShowAnalytics(true);
+  };
+
+  const copyOptimalSet = () => {
     const optimalText = optimalSet.map(h => h.tag).join(' ');
     navigator.clipboard.writeText(optimalText);
     setCopiedOptimal(true);
@@ -127,15 +153,28 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
     
     toast({
       title: "Optimal Set Copied!",
-      description: `${optimalSet.length} hashtags copied (balanced for reach, engagement & trending)`,
+      description: `${optimalSet.length} hashtags copied to clipboard`,
     });
   };
 
   const sortedHashtags = getSortedHashtags();
 
+  const calculateCombinedMetrics = () => {
+    if (optimalSet.length === 0) return { totalReach: 0, avgEngagement: 0, avgTrending: 0 };
+    
+    const totalReach = optimalSet.reduce((sum, h) => sum + h.estimatedReach, 0);
+    const avgEngagement = optimalSet.reduce((sum, h) => sum + h.engagementRate, 0) / optimalSet.length;
+    const avgTrending = optimalSet.reduce((sum, h) => sum + h.trendingScore, 0) / optimalSet.length;
+    
+    return { totalReach, avgEngagement, avgTrending };
+  };
+
   if (!niche) return null;
 
+  const combinedMetrics = calculateCombinedMetrics();
+
   return (
+    <>
     <Card className="p-4 space-y-3 bg-gradient-to-br from-background to-muted border-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -286,5 +325,118 @@ export const TrendingHashtags = ({ niche, mood }: TrendingHashtagsProps) => {
         </p>
       )}
     </Card>
+
+    <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            Optimal Hashtag Set Analytics
+          </DialogTitle>
+          <DialogDescription>
+            {optimalSet.length} hashtags selected for maximum performance
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Combined Metrics Summary */}
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="p-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-1">
+                <Eye className="w-3.5 h-3.5" />
+                <span>Total Reach</span>
+              </div>
+              <p className="text-lg font-bold text-foreground">{formatNumber(combinedMetrics.totalReach)}</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-1">
+                <Heart className="w-3.5 h-3.5" />
+                <span>Avg Engagement</span>
+              </div>
+              <p className="text-lg font-bold text-foreground">{combinedMetrics.avgEngagement.toFixed(1)}%</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-1">
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Avg Trending</span>
+              </div>
+              <p className="text-lg font-bold text-foreground">{combinedMetrics.avgTrending.toFixed(0)}/100</p>
+            </Card>
+          </div>
+
+          {/* Hashtag List with Reasons */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-foreground">Selected Hashtags</h4>
+            <div className="space-y-2">
+              {optimalSet.map((hashtag, index) => (
+                <div
+                  key={index}
+                  className="p-3 rounded-lg border bg-card"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-primary">{hashtag.tag}</p>
+                        <Badge variant="secondary" className="text-xs">
+                          {hashtag.reason}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Eye className="w-3 h-3" />
+                          <span>{formatNumber(hashtag.estimatedReach)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Heart className="w-3 h-3" />
+                          <span>{hashtag.engagementRate.toFixed(1)}%</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <BarChart3 className="w-3 h-3" />
+                          <span>{hashtag.trendingScore}/100</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Why This Combination Works */}
+          <Card className="p-3 bg-primary/5 border-primary/20">
+            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Why This Combination Works
+            </h4>
+            <ul className="text-xs text-muted-foreground space-y-1">
+              <li>• Balanced mix of high-reach hashtags for maximum visibility</li>
+              <li>• High-engagement tags to boost interaction rates</li>
+              <li>• Trending hashtags to ride current social media waves</li>
+              <li>• No duplicate selections ensures diverse audience targeting</li>
+            </ul>
+          </Card>
+
+          {/* Copy Button */}
+          <Button
+            onClick={copyOptimalSet}
+            className="w-full"
+            size="lg"
+          >
+            {copiedOptimal ? (
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                Copied to Clipboard
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 mr-2" />
+                Copy All Hashtags
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
